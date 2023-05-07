@@ -8,18 +8,29 @@ const inter = Inter({ subsets: ['latin'] })
 export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // const [products, setProducts] = useState<
+  //   {
+  //     id: string
+  //     properties: { id: string }[]
+  //   }[]
+  // >([])
   const [products, setProducts] = useState<
     {
       id: string
-      properties: { id: string }[]
+      name: string
+      createdAt: string
     }[]
   >([])
+  // useEffect(() => {
+  //   fetch(`/api/get-items`)
+  //     .then((res) => res.json())
+  //     .then((data) => setProducts(data.items))
+  // }, [])
   useEffect(() => {
-    fetch(`/api/get-items`)
+    fetch(`/api/get-products`)
       .then((res) => res.json())
       .then((data) => setProducts(data.items))
   }, [])
-
   const handleClick = () => {
     if (!inputRef.current || !inputRef.current.value) {
       alert('name을 넣어주세요')
@@ -45,7 +56,7 @@ export default function Home() {
       </div>
       <div>
         <p>Product List</p>
-        {products &&
+        {/* {products &&
           products.map((item) => (
             <div key={item.id}>
               {JSON.stringify(item)}{' '}
@@ -58,6 +69,13 @@ export default function Home() {
                     {key}
                   </button>
                 ))}
+            </div>
+          ))} */}
+        {products &&
+          products.map((item) => (
+            <div key={item.id}>
+              {item.name}
+              <span>{item.createdAt}</span>
             </div>
           ))}
       </div>
