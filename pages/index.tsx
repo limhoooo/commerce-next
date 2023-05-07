@@ -51,7 +51,13 @@ export default function Home() {
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
     >
       <div>
-        <input type="text" ref={inputRef} />
+        <input
+          ref={inputRef}
+          className="placeholder:italic placeholder:text-slate-400 block bg-white w-95 border border-slate-300 rounded-md py-2 pl-3 pr-3 shadow-sm focus:outline-none focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
+          placeholder="Search for anything..."
+          type="text"
+          name="search"
+        />
         <button onClick={handleClick}>click</button>
       </div>
       <div>
