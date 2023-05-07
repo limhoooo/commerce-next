@@ -27,4 +27,4 @@ taliwindcss 추가
 
 emotion 추가
 
-> yarn add @emotion/react @emotion/styled
+> yarn add @emotion/react @emotion/styled @emotion/css

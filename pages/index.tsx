@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import { useEffect, useRef, useState } from 'react'
+import { css } from '@emotion/react'
+import Button from './../components/Button'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -58,7 +60,17 @@ export default function Home() {
           type="text"
           name="search"
         />
-        <button onClick={handleClick}>click</button>
+        <button
+          css={css`
+            background-color: hotpink;
+            padding: 16px;
+            border-radius: 8px;
+          `}
+          onClick={handleClick}
+        >
+          click
+        </button>
+        <Button onClick={handleClick}>btn</Button>
       </div>
       <div>
         <p>Product List</p>
