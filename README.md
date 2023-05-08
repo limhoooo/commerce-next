@@ -28,3 +28,12 @@ taliwindcss 추가
 emotion 추가
 
 > yarn add @emotion/react @emotion/styled @emotion/css
+
+iamge-gallery 추가
+
+> yarn add react-image-gallery
+> yarn add -D @types/react-image-gallery
+
+nuka-carousel 추가
+
+> yarn add nuka-carousel
