@@ -1,6 +1,6 @@
 ### lint-staged<br>
 
-git staged 상태의 파일들만 다켓으로 뭔가 할 수 있게 해줌 <br>
+git staged 상태의 파일들만 타켓으로 뭔가 할 수 있게 해줌 <br>
 
 ### husky 설치<br>
 
