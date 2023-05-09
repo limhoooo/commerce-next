@@ -24,8 +24,8 @@ const images = [
   },
 ]
 
-import React, { useState } from 'react'
-import { EditorState } from 'draft-js'
+import React, { useEffect, useState } from 'react'
+import { EditorState, convertFromRaw, convertToRaw } from 'draft-js'
 
 export default function Products() {
   const [index, setIndex] = useState(0)
@@ -34,7 +34,39 @@ export default function Products() {
   const [editorState, setEditorState] = useState<EditorState | undefined>(
     undefined
   )
-  const handleSave = () => {}
+  const handleSave = () => {
+    editorState &&
+      fetch(`/api/update-product`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id: productId,
+          contents: JSON.stringify(
+            convertToRaw(editorState.getCurrentContent())
+          ),
+        }),
+      })
+        .then((res) => res.json())
+        .then(() => {
+          alert('저장되었습니다.')
+        })
+  }
+  useEffect(() => {
+    productId &&
+      fetch(`/api/get-product?id=${productId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data)
+          if (data.items.contents) {
+            setEditorState(
+              EditorState.createWithContent(
+                convertFromRaw(JSON.parse(data.items.contents))
+              )
+            )
+          } else {
+            setEditorState(EditorState.createEmpty())
+          }
+        })
+  }, [productId])
   return (
     <>
       <Carousel
