@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 const prisma = new PrismaClient()
 
-async function getProducts(skip: number, take: number, category: number) {
+async function getProductsCount(category: number) {
   const where =
     category && category !== -1
       ? {
@@ -14,14 +14,7 @@ async function getProducts(skip: number, take: number, category: number) {
         }
       : undefined
   try {
-    const response = await prisma.products.findMany({
-      skip,
-      take,
-      ...where,
-      orderBy: {
-        price: 'asc',
-      },
-    })
+    const response = await prisma.products.count(where)
     console.log(response)
     return response
   } catch (error) {
@@ -39,16 +32,8 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    const { skip, take, category } = req.query
-    if (!skip || !take) {
-      res.status(400).json({ message: `skip or take 가 없습니다 ` })
-      return
-    }
-    const products = await getProducts(
-      Number(skip),
-      Number(take),
-      Number(category)
-    )
+    const { category } = req.query
+    const products = await getProductsCount(Number(category))
     res.status(200).json({ items: products, message: `성공` })
   } catch (error) {
     res.status(400).json({ message: `실패 ` })

@@ -18,9 +18,9 @@ const images = [
   },
   {
     original:
-      'https://raw.githubusercontent.com/xiaolin/react-image-gallery/master/static/4v.jpg',
+      'https://raw.githubusercontent.com/xiaolin/react-image-gallery/master/static/3v.jpg',
     thumbnail:
-      'https://raw.githubusercontent.com/xiaolin/react-image-gallery/master/static/4v.jpg',
+      'https://raw.githubusercontent.com/xiaolin/react-image-gallery/master/static/3v.jpg',
   },
 ]
 

@@ -47,3 +47,15 @@ ORM : 객체와 관계형 데이터베이스를 매핑해주는것<br>
 
 > yarn add draft-js react-draft-wysiwyg<br>
 > yarn add -D @types/draft-js @types/react-draft-wysiwyg<br>
+
+### ts-node 설치
+
+> yarn add -D ts-node
+
+## blur images
+
+https://png-pixel.com/
+
+## mantine 설치 (페이지네이션)
+
+> yarn add @mantine/core @mantine/hooks

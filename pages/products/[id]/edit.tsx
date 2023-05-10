@@ -24,7 +24,7 @@ const images = [
   },
 ]
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js'
 
 export default function Products() {
@@ -34,39 +34,43 @@ export default function Products() {
   const [editorState, setEditorState] = useState<EditorState | undefined>(
     undefined
   )
-  const handleSave = () => {
-    editorState &&
-      fetch(`/api/update-product`, {
+  const handleSave = async () => {
+    if (!editorState) return
+    const contentState = editorState.getCurrentContent()
+    try {
+      const res = await fetch(`/api/update-product`, {
         method: 'POST',
         body: JSON.stringify({
           id: productId,
-          contents: JSON.stringify(
-            convertToRaw(editorState.getCurrentContent())
-          ),
+          contents: JSON.stringify(convertToRaw(contentState)),
         }),
       })
-        .then((res) => res.json())
-        .then(() => {
-          alert('저장되었습니다.')
-        })
+      await res.json()
+      alert('저장되었습니다.')
+    } catch (error) {
+      console.error(error)
+    }
   }
-  useEffect(() => {
-    productId &&
-      fetch(`/api/get-product?id=${productId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data)
-          if (data.items.contents) {
-            setEditorState(
-              EditorState.createWithContent(
-                convertFromRaw(JSON.parse(data.items.contents))
-              )
-            )
-          } else {
-            setEditorState(EditorState.createEmpty())
-          }
-        })
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/get-product?id=${productId}`)
+      const data = await res.json()
+      if (data.items.contents) {
+        const content = convertFromRaw(JSON.parse(data.items.contents))
+        const newState = EditorState.createWithContent(content)
+        setEditorState(newState)
+      } else {
+        const newState = EditorState.createEmpty()
+        setEditorState(newState)
+      }
+    } catch (error) {
+      console.error(error)
+    }
   }, [productId])
+
+  useEffect(() => {
+    productId && fetchData()
+  }, [productId, fetchData])
   return (
     <>
       <Carousel

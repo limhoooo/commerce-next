@@ -13,9 +13,11 @@
     "@emotion/css": "^11.11.0",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
+    "@mantine/core": "^6.0.10",
+    "@mantine/hooks": "^6.0.10",
     "@notionhq/client": "^2.2.5",
     "@prisma/client": "^4.13.0",
-    "@types/node": "20.1.0",
+    "@types/node": "^20.1.1",
     "@types/react": "18.2.5",
     "@types/react-dom": "18.2.4",
     "autoprefixer": "10.4.14",
@@ -40,7 +42,8 @@
     "lint-staged": "^13.2.2",
     "next-sitemap": "^4.0.9",
     "prettier": "^2.8.8",
-    "prisma": "^4.13.0"
+    "prisma": "^4.13.0",
+    "ts-node": "^10.9.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
