@@ -17,6 +17,7 @@
     "@mantine/hooks": "^6.0.10",
     "@notionhq/client": "^2.2.5",
     "@prisma/client": "^4.13.0",
+    "@tabler/icons-react": "^2.17.0",
     "@types/node": "^20.1.1",
     "@types/react": "18.2.5",
     "@types/react-dom": "18.2.4",

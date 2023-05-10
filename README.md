@@ -14,7 +14,7 @@ git hook 동작에 따른 액션을 할수있음<br>
 
 ### prisma 설치 (ORM)<br>
 
-ORM : 객체와 관계형 데이터베이스를 매핑해주는것<br>
+ORM : 객체와 데이터베이스의 관계를 매핑해주는것<br>
 
 > yarn add -D prisma<br>
 > yarn add @prisma/client<br>
@@ -56,6 +56,7 @@ ORM : 객체와 관계형 데이터베이스를 매핑해주는것<br>
 
 https://png-pixel.com/
 
-## mantine 설치 (페이지네이션)
+## mantine 설치 (페이지네이션, 카테고리, 필터)
 
 > yarn add @mantine/core @mantine/hooks
+> yarn add @tabler/icons-react
