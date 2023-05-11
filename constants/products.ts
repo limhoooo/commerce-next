@@ -1,4 +1,6 @@
+// 상태관리툴 추가시 category api 호출때 값 넣어주는걸로 변경 예정
 export const CATEGORY_MAP = ['SNEAKERS', 'T-SHIRT', 'PANTS', 'CAP', 'HOODIE']
+
 export const TAKE = 9
 export const FILTERS = [
   { label: '최신순', value: 'latest' },

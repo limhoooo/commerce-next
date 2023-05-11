@@ -6,7 +6,7 @@ git staged 상태의 파일들만 타켓으로 뭔가 할 수 있게 해줌 <br>
 
 git hook 동작에 따른 액션을 할수있음<br>
 
-### 노션 api 를 DB 로 사용<br>
+### 노션 api 를 DB 로 사용<br> (사용안함)
 
 > yarn add @notionhq/client 설치<br>
 
@@ -19,6 +19,8 @@ ORM : 객체와 데이터베이스의 관계를 매핑해주는것<br>
 > yarn add -D prisma<br>
 > yarn add @prisma/client<br>
 > yarn prisma init<br>
+
+> yarn prisma db push (schema.prisma 에서 만든 테이블 등등 실제 db에다 push)
 > yarn prisma generate (schema.prisma 파일변경시 싱크 맞추기)<br>
 
 ### taliwindcss 설치<br>
@@ -30,7 +32,7 @@ ORM : 객체와 데이터베이스의 관계를 매핑해주는것<br>
 
 > yarn add @emotion/react @emotion/styled @emotion/css<br>
 
-### iamge-gallery 설치<br>
+### iamge-gallery 설치<br> (사용안함)
 
 > yarn add react-image-gallery<br>
 > yarn add -D @types/react-image-gallery<br>
@@ -62,4 +64,22 @@ https://png-pixel.com/
 > yarn add @tabler/icons-react
 
 ## react-query 설치
+
 > yarn add @tanstack/react-query
+
+## google oauth 설치 (사용안함)
+
+https://github.com/MomenSherif/react-oauth#googlelogin
+
+> yarn add @react-oauth/google@latest
+
+## jwt decode 설치 (사용안함)
+
+> yarn add jwt-decode
+
+## next-auth + prisma 설치
+
+로그인(구글)을 하면 쿠키에 토큰 담는것까지 해줌
+https://next-auth.js.org/getting-started/example
+
+> yarn add next-auth @next-auth/prisma-adapter

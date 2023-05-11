@@ -6,8 +6,10 @@ import { CATEGORY_MAP, FILTERS, TAKE } from '@/constants/products'
 import { IconSearch } from '@tabler/icons-react'
 import useDebounce from './../../hooks/useDebounce'
 import { useQuery } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 
 export default function Products() {
+  const { data: session } = useSession()
   const [activePage, setPage] = useState(1)
   const [selectedCategory, setSelectedCategory] = useState<string>('-1')
   // const [total, setTotal] = useState(0)
@@ -96,6 +98,7 @@ export default function Products() {
   }
   return (
     <div className="px-36 mt-36 mb-36">
+      {session && <p>안녕하세요. {session.user?.name}님</p>}
       <div className="mb-4">
         <Input
           icon={<IconSearch />}
