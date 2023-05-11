@@ -60,3 +60,6 @@ https://png-pixel.com/
 
 > yarn add @mantine/core @mantine/hooks
 > yarn add @tabler/icons-react
+
+## react-query 설치
+> yarn add @tanstack/react-query
