@@ -40,6 +40,21 @@ https: const productData: Prisma.productsCreateInput[] = Array.apply(
 
 async function main() {
   // await prisma.products.deleteMany({})
+  const CATEGORY_MAP = ['SNEAKERS', 'T-SHIRT', 'PANTS', 'CAP', 'HOODIE']
+  CATEGORY_MAP.forEach(async (c, i) => {
+    const product = await prisma.categories.upsert({
+      where: {
+        id: i + 1,
+      },
+      update: {
+        name: c,
+      },
+      create: {
+        name: c,
+      },
+    })
+    console.log(product.id)
+  })
 
   for (const p of productData) {
     const product = await prisma.products.create({
