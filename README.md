@@ -83,3 +83,7 @@ https://github.com/MomenSherif/react-oauth#googlelogin
 https://next-auth.js.org/getting-started/example
 
 > yarn add next-auth @next-auth/prisma-adapter
+
+## date-fns 설치
+
+> yarn add date-fns

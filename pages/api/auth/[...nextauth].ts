@@ -13,4 +13,9 @@ export default NextAuth({
       clientSecret: String(process.env.NEXT_PUBLIC_GOOGLE_SECRET_KEY),
     }),
   ],
+  session: {
+    strategy: 'database',
+    // 24시간
+    maxAge: 1 * 24 * 60 * 60,
+  },
 })
