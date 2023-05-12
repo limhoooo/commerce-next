@@ -65,6 +65,8 @@ https://png-pixel.com/
 
 ## react-query 설치
 
+https://velog.io/@kimhyo_0218/React-Query-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EC%BF%BC%EB%A6%AC-%EC%8B%9C%EC%9E%91%ED%95%98%EA%B8%B0-useQuery
+
 > yarn add @tanstack/react-query
 
 ## google oauth 설치 (사용안함)
