@@ -38,7 +38,7 @@ export default async function handler(
       return
     }
     const wishlist = await getWishlist(String(session.id))
-    console.log(wishlist)
+    console.log(`wishlist : ${wishlist}`)
 
     res.status(200).json({ items: wishlist, message: `성공` })
   } catch (error) {

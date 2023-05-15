@@ -9,7 +9,7 @@ import { GetServerSidePropsContext } from 'next'
 import { products } from '@prisma/client'
 import { format } from 'date-fns'
 import { CATEGORY_MAP } from '@/constants/products'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@mantine/core'
 import { IconHeart, IconHeartbeat } from '@tabler/icons-react'
 import { useSession } from 'next-auth/react'
@@ -35,6 +35,7 @@ export default function Products(props: {
   const { data: session } = useSession()
   const router = useRouter()
   const { id: productId } = router.query
+  const queryClient = useQueryClient()
   const [editorState] = useState<EditorState | undefined>(
     props.product.contents
       ? EditorState.createWithContent(
@@ -44,22 +45,41 @@ export default function Products(props: {
   )
 
   const fetchWishList = async () => {
-    return fetch(`/api/get-wishlist`)
-      .then((res) => res.json())
-      .then((data) => data.item)
+    const response = await fetch(`/api/get-wishlist`)
+    const data = await response.json()
+    return data.items
   }
   const { data: wishlist } = useQuery(['getWishlist'], () => fetchWishList())
 
-  const { mutate, data } = useMutation(
-    (productId: string) =>
-      fetch('/api/update-wishlist', {
-        method: 'POST',
-        body: JSON.stringify({ productId }),
-      })
-        .then((res) => res.json())
-        .then((data) => data.item),
+  const postWishlist = async (productId: string) => {
+    const response = await fetch('/api/update-wishlist', {
+      method: 'POST',
+      body: JSON.stringify({ productId }),
+    })
+    const data = await response.json()
+    return data.items
+  }
+  const { mutate, isLoading } = useMutation<unknown, unknown, string>(
+    (productId: string) => postWishlist(productId),
     {
-      // onMutate: async(productId)
+      // Optimistic updates
+      onMutate: async (productId) => {
+        await queryClient.cancelQueries(['getWishlist'])
+        const previous = queryClient.getQueryData(['getWishlist'])
+        console.log(previous)
+        queryClient.setQueryData<string[]>(['getWishlist'], (old) =>
+          old
+            ? old.includes(String(productId))
+              ? old.filter((id) => id !== String(productId))
+              : old.concat(String(productId))
+            : []
+        )
+        return { previous }
+      },
+      onSuccess(data, variables, context) {
+        console.log('onSuccess')
+        queryClient.invalidateQueries(['getWishlist'])
+      },
     }
   )
 
@@ -124,13 +144,14 @@ export default function Products(props: {
             <div className="text-lg">
               {product.price.toLocaleString('ko-kr')}원
             </div>
-            <div>{wishlist}</div>
+            {/* <div>{JSON.stringify(wishlist)}</div> */}
             <Button
+              // loading={isLoading}
               leftIcon={
                 isWished ? (
-                  <IconHeartbeat size={20} stroke={1.5} />
-                ) : (
                   <IconHeart size={20} stroke={1.5} />
+                ) : (
+                  <IconHeartbeat size={20} stroke={1.5} />
                 )
               }
               style={{ backgroundColor: isWished ? 'red' : 'grey' }}
