@@ -11,8 +11,9 @@ import { format } from 'date-fns'
 import { CATEGORY_MAP } from '@/constants/products'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@mantine/core'
-import { IconHeart, IconHeartbeat } from '@tabler/icons-react'
+import { IconHeart, IconHeartbeat, IconShoppingCart } from '@tabler/icons-react'
 import { useSession } from 'next-auth/react'
+import { CountControl } from '@/components/CountControl'
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const product = await fetch(
@@ -33,6 +34,7 @@ export default function Products(props: {
 }) {
   const [index, setIndex] = useState(0)
   const { data: session } = useSession()
+  const [quantity, setQuantity] = useState<number | ''>(1)
   const router = useRouter()
   const { id: productId } = router.query
   const queryClient = useQueryClient()
@@ -50,7 +52,10 @@ export default function Products(props: {
     return data.items
   }
   const { data: wishlist } = useQuery(['getWishlist'], () => fetchWishList())
-
+  const validate = (type: 'cart' | 'order') => {
+    if (!quantity) return alert('최소수량을 입력해주세요')
+    router.push('/cart')
+  }
   const postWishlist = async (productId: string) => {
     const response = await fetch('/api/update-wishlist', {
       method: 'POST',
@@ -59,7 +64,7 @@ export default function Products(props: {
     const data = await response.json()
     return data.items
   }
-  const { mutate, isLoading } = useMutation<unknown, unknown, string>(
+  const { mutate, isLoading } = useMutation<unknown, unknown, string, any>(
     (productId: string) => postWishlist(productId),
     {
       // Optimistic updates
@@ -76,6 +81,9 @@ export default function Products(props: {
         )
         return { previous }
       },
+      onError: (error, _, context) => {
+        queryClient.setQueryData(['getWishlist'], context.previous)
+      },
       onSuccess(data, variables, context) {
         console.log('onSuccess')
         queryClient.invalidateQueries(['getWishlist'])
@@ -86,28 +94,10 @@ export default function Products(props: {
   const product = props.product
 
   const isWished = wishlist ? wishlist.includes(productId) : false
-
-  // useEffect(() => {
-  //   productId &&
-  //     fetch(`/api/get-product?id=${productId}`)
-  //       .then((res) => res.json())
-  //       .then((data) => {
-  //         console.log(data)
-  //         if (data.items.contents) {
-  //           setEditorState(
-  //             EditorState.createWithContent(
-  //               convertFromRaw(JSON.parse(data.items.contents))
-  //             )
-  //           )
-  //         } else {
-  //           setEditorState(EditorState.createEmpty())
-  //         }
-  //       })
-  // }, [productId])
   return (
     <>
       {product && productId ? (
-        <div className="p-24 flex flex-row">
+        <div className="flex flex-row">
           <div style={{ maxWidth: 600, marginRight: 52 }}>
             <Carousel
               animation="fade"
@@ -144,33 +134,59 @@ export default function Products(props: {
             <div className="text-lg">
               {product.price.toLocaleString('ko-kr')}원
             </div>
-            {/* <div>{JSON.stringify(wishlist)}</div> */}
-            <Button
-              // loading={isLoading}
-              leftIcon={
-                isWished ? (
-                  <IconHeart size={20} stroke={1.5} />
-                ) : (
-                  <IconHeartbeat size={20} stroke={1.5} />
-                )
-              }
-              style={{ backgroundColor: isWished ? 'red' : 'grey' }}
-              radius="xl"
-              size="md"
-              styles={{
-                root: { paddingRight: 14, height: 48 },
-              }}
-              onClick={() => {
-                if (session == null) {
-                  alert('로그인이 필요한 기능입니다.')
-                  router.push('/auth/login')
-                  return
+            <div>
+              <span className="text-lg">수량</span>
+              <CountControl value={quantity} setValue={setQuantity} />
+            </div>
+            <div className="flex space-x-3">
+              <Button
+                leftIcon={<IconShoppingCart size={20} stroke={1.5} />}
+                style={{ backgroundColor: 'black' }}
+                radius="xl"
+                size="md"
+                styles={{
+                  root: { paddingRight: 14, height: 48 },
+                }}
+                onClick={() => {
+                  if (session == null) {
+                    alert('로그인이 필요한 기능입니다.')
+                    router.push('/auth/login')
+                    return
+                  }
+                  validate('cart')
+                }}
+              >
+                장바구니
+              </Button>
+              <Button
+                // loading={isLoading}
+                disabled={wishlist == null}
+                leftIcon={
+                  isWished ? (
+                    <IconHeart size={20} stroke={1.5} />
+                  ) : (
+                    <IconHeartbeat size={20} stroke={1.5} />
+                  )
                 }
-                mutate(String(productId))
-              }}
-            >
-              찜하기
-            </Button>
+                style={{ backgroundColor: isWished ? 'red' : 'grey' }}
+                radius="xl"
+                size="md"
+                styles={{
+                  root: { paddingRight: 14, height: 48 },
+                }}
+                onClick={() => {
+                  if (session == null) {
+                    alert('로그인이 필요한 기능입니다.')
+                    router.push('/auth/login')
+                    return
+                  }
+                  mutate(String(productId))
+                }}
+              >
+                찜하기
+              </Button>
+            </div>
+
             <div className="text-sm text-zinc-300">
               등록일자 : {format(new Date(product.createdAt), 'yyyy년 M월 d일')}
             </div>

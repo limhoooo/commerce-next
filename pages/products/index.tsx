@@ -1,34 +1,117 @@
-import { TAKE } from '@/constants/products'
-import { products } from '@prisma/client'
+import { categories, products } from '@prisma/client'
 import Image from 'next/image'
 import { useState, useEffect, useCallback } from 'react'
+import { Input, Pagination, SegmentedControl, Select } from '@mantine/core'
+import { CATEGORY_MAP, FILTERS, TAKE } from '@/constants/products'
+import { IconSearch } from '@tabler/icons-react'
+import useDebounce from './../../hooks/useDebounce'
+import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 
-export default function Products() {
-  const [skip, setSkip] = useState(0)
-  const [products, setProducts] = useState<products[]>([])
+export default function Home() {
+  const router = useRouter()
+  const [activePage, setPage] = useState(1)
+  const [selectedCategory, setSelectedCategory] = useState<string>('-1')
+  const [keyward, setKeyward] = useState<string>('')
 
-  useEffect(() => {
-    fetch(`/api/get-products?skip=0&take=${TAKE}`)
-      .then((res) => res.json())
-      .then((data) => setProducts(data.items))
-  }, [])
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(
+    FILTERS[0].value
+  )
 
-  const getProducts = useCallback(() => {
-    const next = skip + TAKE
-    fetch(`/api/get-products?skip=${next}&take=${TAKE}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts((state) => [...state, ...data.items])
-      })
-    setSkip(next)
-  }, [skip, setProducts])
+  // 디바운스 키워드
+  const debouncedKeyword = useDebounce<string>(keyward)
 
+  const categoryHandler = (data: string) => {
+    setPage(1)
+    setSelectedCategory(data)
+  }
+  const getCategoriesFetch = async () => {
+    const res = await fetch(`/api/get-categories`)
+    const data = await res.json()
+    return data.items
+  }
+  const getProductscountFetch = async () => {
+    const res = await fetch(
+      `/api/get-products-count?category=${selectedCategory}&contains=${debouncedKeyword}`
+    )
+    const data = await res.json()
+    return Math.ceil(data.items / TAKE)
+  }
+  const getProductsFetch = async () => {
+    const res = await fetch(
+      `/api/get-products?skip=${
+        TAKE * (activePage - 1)
+      }&take=${TAKE}&category=${selectedCategory}&orderBy=${selectedFilter}&contains=${debouncedKeyword}`
+    )
+    const data = await res.json()
+    return data.items
+  }
+  const { data: categories } = useQuery<categories[]>(['getCategories'], () =>
+    getCategoriesFetch()
+  )
+
+  const { data: total } = useQuery<number>(
+    ['getProductscount', selectedCategory, debouncedKeyword],
+    () => getProductscountFetch()
+  )
+
+  const { data: products, isFetching } = useQuery<products[]>(
+    [
+      `getProducts`,
+      TAKE,
+      activePage,
+      selectedCategory,
+      selectedFilter,
+      debouncedKeyword,
+    ],
+    () => getProductsFetch()
+  )
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKeyward(e.target.value)
+  }
   return (
-    <div className="px-36 mt-36 mb-36">
+    <div className="mt-36 mb-36">
+      <div className="mb-4">
+        <Input
+          icon={<IconSearch />}
+          placeholder="Search"
+          value={keyward}
+          onChange={handleChange}
+        />
+      </div>
+      <div className="mb-4">
+        <Select
+          value={selectedFilter}
+          onChange={setSelectedFilter}
+          data={FILTERS}
+        />
+      </div>
+      {categories && (
+        <div className="mb-4">
+          <SegmentedControl
+            value={selectedCategory}
+            onChange={(data) => categoryHandler(data)}
+            color="dark"
+            data={[
+              { label: 'ALL', value: '-1' },
+              ...categories.map((item) => ({
+                label: item.name,
+                value: String(item.id),
+              })),
+            ]}
+          />
+        </div>
+      )}
+      {isFetching && <div>로딩중입니다.</div>}
       {products && (
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-3 gap-16">
           {products.map((item) => (
-            <div key={item.id} style={{ maxWidth: '500px' }}>
+            <div
+              key={item.id}
+              style={{ maxWidth: '500px', cursor: 'pointer' }}
+              onClick={() => router.push(`/products/${item.id}`)}
+            >
               <Image
                 className="rounded"
                 alt={item.name}
@@ -45,18 +128,22 @@ export default function Products() {
                 </span>
               </div>
               <span className="text-zinc-400">
-                {item.category_id === 1 && '의류'}
+                {CATEGORY_MAP[Number(item.category_id - 1)]}
               </span>
             </div>
           ))}
         </div>
       )}
-      <button
-        className="w-full rounded mt-20 bg-zinc-200 p-4"
-        onClick={getProducts}
-      >
-        더보기
-      </button>
+      <div className="w-full flex mt-5">
+        {total !== 0 && total && (
+          <Pagination
+            className="m-auto"
+            value={activePage}
+            onChange={setPage}
+            total={total}
+          />
+        )}
+      </div>
     </div>
   )
 }

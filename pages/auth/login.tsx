@@ -3,8 +3,7 @@ import GoogleLogin from '../../components/GoogleLogin'
 import React from 'react'
 const LoginBox = styled.div`
   display: flex;
-  width: 100vw;
-  height: 100vh;
+  height: 70vh;
   align-items: center;
   justify-content: center;
 `

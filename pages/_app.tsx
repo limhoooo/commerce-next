@@ -1,8 +1,8 @@
 import '@/styles/globals.css'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import type { AppProps } from 'next/app'
-// import { GoogleOAuthProvider } from '@react-oauth/google'
 import { SessionProvider } from 'next-auth/react'
+import Header from '@/components/Header'
 
 export default function App({
   Component,
@@ -14,14 +14,13 @@ export default function App({
     },
   })
   return (
-    // <GoogleOAuthProvider
-    //   clientId={String(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID)}
-    // >
     <SessionProvider session={session}>
       <QueryClientProvider client={queryClient}>
-        <Component {...pageProps} />
+        <div className="px-36 ">
+          <Header />
+          <Component {...pageProps} />
+        </div>
       </QueryClientProvider>
     </SessionProvider>
-    // </GoogleOAuthProvider>
   )
 }
