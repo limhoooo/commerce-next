@@ -6,7 +6,7 @@ import Carousel from 'nuka-carousel'
 import React, { useEffect, useState } from 'react'
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js'
 import { GetServerSidePropsContext } from 'next'
-import { products } from '@prisma/client'
+import { products, Cart } from '@prisma/client'
 import { format } from 'date-fns'
 import { CATEGORY_MAP } from '@/constants/products'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -45,6 +45,7 @@ export default function Products(props: {
         )
       : EditorState.createEmpty()
   )
+  const product = props.product
 
   const fetchWishList = async () => {
     const response = await fetch(`/api/get-wishlist`)
@@ -52,9 +53,14 @@ export default function Products(props: {
     return data.items
   }
   const { data: wishlist } = useQuery(['getWishlist'], () => fetchWishList())
+
   const validate = (type: 'cart' | 'order') => {
     if (!quantity) return alert('최소수량을 입력해주세요')
-    router.push('/cart')
+    addCart({
+      productId: product.id,
+      quantity,
+      amount: product.price * quantity,
+    })
   }
   const postWishlist = async (productId: string) => {
     const response = await fetch('/api/update-wishlist', {
@@ -91,7 +97,24 @@ export default function Products(props: {
     }
   )
 
-  const product = props.product
+  const createCart = async (item: Omit<Cart, 'id' | 'userId'>) => {
+    const response = await fetch('/api/add-cart', {
+      method: 'POST',
+      body: JSON.stringify({ item }),
+    })
+    const data = await response.json()
+    return data.items
+  }
+  const { mutate: addCart } = useMutation<
+    unknown,
+    unknown,
+    Omit<Cart, 'id' | 'userId'>,
+    any
+  >((item) => createCart(item), {
+    onSuccess() {
+      router.push('/cart')
+    },
+  })
 
   const isWished = wishlist ? wishlist.includes(productId) : false
   return (

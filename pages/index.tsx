@@ -1,102 +1,149 @@
+import { categories, products } from '@prisma/client'
 import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import { useEffect, useRef, useState } from 'react'
-import { css } from '@emotion/react'
-import Button from './../components/Button'
+import { useState, useEffect, useCallback } from 'react'
+import { Input, Pagination, SegmentedControl, Select } from '@mantine/core'
+import { CATEGORY_MAP, FILTERS, TAKE } from '@/constants/products'
+import { IconSearch } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
+import useDebounce from '@/hooks/useDebounce'
 
-const inter = Inter({ subsets: ['latin'] })
-
-// secret_hCA1p3xaQpc7T4NaDQ0cHClYcak40lWebSDNXfgF0Ou
 export default function Home() {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
+  const [activePage, setPage] = useState(1)
+  const [selectedCategory, setSelectedCategory] = useState<string>('-1')
+  const [keyward, setKeyward] = useState<string>('')
 
-  // const [products, setProducts] = useState<
-  //   {
-  //     id: string
-  //     properties: { id: string }[]
-  //   }[]
-  // >([])
-  const [products, setProducts] = useState<
-    {
-      id: string
-      name: string
-      createdAt: string
-    }[]
-  >([])
-  // useEffect(() => {
-  //   fetch(`/api/get-items`)
-  //     .then((res) => res.json())
-  //     .then((data) => setProducts(data.items))
-  // }, [])
-  useEffect(() => {
-    fetch(`/api/get-products`)
-      .then((res) => res.json())
-      .then((data) => setProducts(data.items))
-  }, [])
-  const handleClick = () => {
-    if (!inputRef.current || !inputRef.current.value) {
-      alert('name을 넣어주세요')
-      return
-    }
-    fetch(`/api/add-item?name=${inputRef.current.value}`)
-      .then((res) => res.json())
-      .then((data) => console.log(data))
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(
+    FILTERS[0].value
+  )
+
+  // 디바운스 키워드
+  const debouncedKeyword = useDebounce<string>(keyward)
+
+  const categoryHandler = (data: string) => {
+    setPage(1)
+    setSelectedCategory(data)
   }
-  const getDetailHandle = (pageId: string, propertyId: string) => {
-    fetch(`/api/get-detail?pageId=${pageId}&propertyId=${propertyId}`)
-      .then((res) => res.json())
-      // .then((data) => alert(JSON.stringify(data)))
-      .then((data) => console.log(data.detail))
+  const getCategoriesFetch = async () => {
+    const res = await fetch(`/api/get-categories`)
+    const data = await res.json()
+    return data.items
+  }
+  const getProductscountFetch = async () => {
+    const res = await fetch(
+      `/api/get-products-count?category=${selectedCategory}&contains=${debouncedKeyword}`
+    )
+    const data = await res.json()
+    return Math.ceil(data.items / TAKE)
+  }
+  const getProductsFetch = async () => {
+    const res = await fetch(
+      `/api/get-products?skip=${
+        TAKE * (activePage - 1)
+      }&take=${TAKE}&category=${selectedCategory}&orderBy=${selectedFilter}&contains=${debouncedKeyword}`
+    )
+    const data = await res.json()
+    return data.items
+  }
+  const { data: categories } = useQuery<categories[]>(['getCategories'], () =>
+    getCategoriesFetch()
+  )
+
+  const { data: total } = useQuery<number>(
+    ['getProductscount', selectedCategory, debouncedKeyword],
+    () => getProductscountFetch()
+  )
+
+  const { data: products, isFetching } = useQuery<products[]>(
+    [
+      `getProducts`,
+      TAKE,
+      activePage,
+      selectedCategory,
+      selectedFilter,
+      debouncedKeyword,
+    ],
+    () => getProductsFetch()
+  )
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKeyward(e.target.value)
   }
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div>
-        <input
-          ref={inputRef}
-          className="placeholder:italic placeholder:text-slate-400 block bg-white w-95 border border-slate-300 rounded-md py-2 pl-3 pr-3 shadow-sm focus:outline-none focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
-          placeholder="Search for anything..."
-          type="text"
-          name="search"
+    <div className="mt-36 mb-36">
+      <div className="mb-4">
+        <Input
+          icon={<IconSearch />}
+          placeholder="Search"
+          value={keyward}
+          onChange={handleChange}
         />
-        <button
-          css={css`
-            background-color: hotpink;
-            padding: 16px;
-            border-radius: 8px;
-          `}
-          onClick={handleClick}
-        >
-          click
-        </button>
-        <Button onClick={handleClick}>btn</Button>
       </div>
-      <div>
-        <p>Product List</p>
-        {/* {products &&
-          products.map((item) => (
-            <div key={item.id}>
-              {JSON.stringify(item)}{' '}
-              {item.properties &&
-                Object.entries(item.properties).map(([key, value]) => (
-                  <button
-                    key={key}
-                    onClick={() => getDetailHandle(item.id, value.id)}
-                  >
-                    {key}
-                  </button>
-                ))}
-            </div>
-          ))} */}
-        {products &&
-          products.map((item) => (
-            <div key={item.id}>
-              {item.name}
-              <span>{item.createdAt}</span>
+      <div className="mb-4">
+        <Select
+          value={selectedFilter}
+          onChange={setSelectedFilter}
+          data={FILTERS}
+        />
+      </div>
+      {categories && (
+        <div className="mb-4">
+          <SegmentedControl
+            value={selectedCategory}
+            onChange={(data) => categoryHandler(data)}
+            color="dark"
+            data={[
+              { label: 'ALL', value: '-1' },
+              ...categories.map((item) => ({
+                label: item.name,
+                value: String(item.id),
+              })),
+            ]}
+          />
+        </div>
+      )}
+      {isFetching && <div>로딩중입니다.</div>}
+      {products && (
+        <div className="grid grid-cols-3 gap-16">
+          {products.map((item) => (
+            <div
+              key={item.id}
+              style={{ maxWidth: '500px', cursor: 'pointer' }}
+              onClick={() => router.push(`/products/${item.id}`)}
+            >
+              <Image
+                className="rounded"
+                alt={item.name}
+                src={item.image_url ?? ''}
+                width={500}
+                height={300}
+                placeholder="blur"
+                blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNcvmBZPQAGUQJu8FicRAAAAABJRU5ErkJggg=="
+              />
+              <div className="flex">
+                <span>{item.name}</span>
+                <span className="ml-auto">
+                  {item.price.toLocaleString('ko-KR')}원
+                </span>
+              </div>
+              <span className="text-zinc-400">
+                {CATEGORY_MAP[Number(item.category_id - 1)]}
+              </span>
             </div>
           ))}
+        </div>
+      )}
+      <div className="w-full flex mt-5">
+        {total !== 0 && total && (
+          <Pagination
+            className="m-auto"
+            value={activePage}
+            onChange={setPage}
+            total={total}
+          />
+        )}
       </div>
-    </main>
+    </div>
   )
 }

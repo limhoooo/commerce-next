@@ -10,7 +10,7 @@ async function getProducts(
   take: number,
   category: number,
   orderBy: string,
-  contains: string
+  contains: string | ''
 ) {
   const containsCondition =
     contains && contains !== ''
@@ -61,7 +61,7 @@ export default async function handler(
       Number(take),
       Number(category),
       String(orderBy),
-      String(contains)
+      contains ? String(contains) : ''
     )
     res.status(200).json({ items: products, message: `성공` })
   } catch (error) {
