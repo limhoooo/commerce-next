@@ -111,6 +111,9 @@ export default function Products(props: {
     Omit<Cart, 'id' | 'userId'>,
     any
   >((item) => createCart(item), {
+    onMutate() {
+      queryClient.invalidateQueries(['getWishlist'])
+    },
     onSuccess() {
       router.push('/cart')
     },

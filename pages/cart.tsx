@@ -5,7 +5,7 @@ import { Button } from '@mantine/core'
 import { products, Cart } from '@prisma/client'
 import { IconX } from '@tabler/icons-react'
 import { IconRefresh } from '@tabler/icons-react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState, useMemo } from 'react'
@@ -141,15 +141,82 @@ const Item = (props: CartItem) => {
   const [quantity, setQuantity] = useState<number | ''>(props.quantity)
   const [amount, setAmount] = useState<number>(props.quantity)
   const router = useRouter()
-
+  const queryClient = useQueryClient()
   useEffect(() => {
     if (quantity) {
       setAmount(quantity * props.price)
     }
   }, [quantity, props.price])
 
-  const handleUpdate = () => {}
-  const handleDelete = () => {}
+  const updateCartFetch = async (item: Cart) => {
+    const response = await fetch('/api/update-cart', {
+      method: 'POST',
+      body: JSON.stringify({ item }),
+    })
+    const data = await response.json()
+    return data.items
+  }
+  const { mutate: updateCart, isLoading } = useMutation<
+    unknown,
+    unknown,
+    Cart,
+    any
+  >((item: Cart) => updateCartFetch(item), {
+    // Optimistic updates
+    onMutate: async (item) => {
+      await queryClient.cancelQueries(['getCart'])
+      const previous = queryClient.getQueryData(['getCart'])
+      console.log(previous)
+      queryClient.setQueryData<Cart[]>(['getCart'], (old) =>
+        old?.filter((c) => c.id !== item.id).concat(item)
+      )
+      return { previous }
+    },
+    onError: (error, _, context) => {
+      queryClient.setQueryData(['getCart'], context.previous)
+    },
+    onSuccess(data, variables, context) {
+      console.log('onSuccess')
+      queryClient.invalidateQueries(['getCart'])
+    },
+  })
+  const deleteCartFetch = async (id: number) => {
+    const response = await fetch('/api/delete-cart', {
+      method: 'POST',
+      body: JSON.stringify({ id }),
+    })
+    const data = await response.json()
+    return data.items
+  }
+  const { mutate: deleteCart } = useMutation<unknown, unknown, number, any>(
+    (id: number) => deleteCartFetch(id),
+    {
+      // Optimistic updates
+      onMutate: async (id) => {
+        await queryClient.cancelQueries(['getCart'])
+        const previous = queryClient.getQueryData(['getCart'])
+        console.log(previous)
+        queryClient.setQueryData<Cart[]>(['getCart'], (old) =>
+          old?.filter((c) => c.id !== id)
+        )
+        return { previous }
+      },
+      onError: (error, _, context) => {
+        queryClient.setQueryData(['getCart'], context.previous)
+      },
+      onSuccess(data, variables, context) {
+        console.log('onSuccess')
+        queryClient.invalidateQueries(['getCart'])
+      },
+    }
+  )
+  const handleUpdate = () => {
+    if (!quantity) return alert('최소 수량을 선택해주세요')
+    updateCart({ ...props, quantity, amount: props.price * quantity })
+  }
+  const handleDelete = () => {
+    deleteCart(props.id)
+  }
 
   return (
     <div className="w-full flex p-4" style={{ borderBottom: '1px solid grey' }}>

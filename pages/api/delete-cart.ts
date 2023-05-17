@@ -1,24 +1,21 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Cart } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { unstable_getServerSession } from 'next-auth'
 import { authOption } from './auth/[...nextauth]'
 
 const prisma = new PrismaClient()
 
-async function getCart(userId: string) {
+async function deleteCart(id: number) {
   try {
-    const cart = await prisma.$queryRaw`
-      SELECT 
-      c.id, userId, quantity, amount, price, name, image_url ,productId
-      FROM 
-      Cart as c 
-      JOIN products as p 
-      WHERE c.productId = p.id`
+    const response = await prisma.cart.delete({
+      where: {
+        id,
+      },
+    })
+    console.log(response)
 
-    console.log(cart)
-
-    return cart
+    return response
   } catch (error) {
     console.error(error)
   }
@@ -34,13 +31,15 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const session = await unstable_getServerSession(req, res, authOption)
+  const { id } = JSON.parse(req.body)
 
   try {
     if (session == null) {
       res.status(200).json({ items: [], message: `no session` })
       return
     }
-    const wishlist = await getCart(String(session.id))
+    const wishlist = await deleteCart(id)
+    console.log(wishlist)
 
     res.status(200).json({ items: wishlist, message: `성공` })
   } catch (error) {
