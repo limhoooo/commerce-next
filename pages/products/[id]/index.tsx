@@ -6,7 +6,7 @@ import Carousel from 'nuka-carousel'
 import React, { useEffect, useState } from 'react'
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js'
 import { GetServerSidePropsContext } from 'next'
-import { products, Cart } from '@prisma/client'
+import { products, Cart, OrderItem } from '@prisma/client'
 import { format } from 'date-fns'
 import { CATEGORY_MAP } from '@/constants/products'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -56,11 +56,21 @@ export default function Products(props: {
 
   const validate = (type: 'cart' | 'order') => {
     if (!quantity) return alert('최소수량을 입력해주세요')
-    addCart({
-      productId: product.id,
-      quantity,
-      amount: product.price * quantity,
-    })
+    type === 'cart' &&
+      addCart({
+        productId: product.id,
+        quantity,
+        amount: product.price * quantity,
+      })
+    type === 'order' &&
+      addOrder([
+        {
+          productId: product.id,
+          quantity,
+          amount: product.price * quantity,
+          price: product.price,
+        },
+      ])
   }
   const postWishlist = async (productId: string) => {
     const response = await fetch('/api/update-wishlist', {
@@ -96,6 +106,28 @@ export default function Products(props: {
       },
     }
   )
+
+  const createOrder = async (items: Omit<OrderItem, 'id'>[]) => {
+    const response = await fetch('/api/add-order', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    })
+    const data = await response.json()
+    return data.items
+  }
+  const { mutate: addOrder } = useMutation<
+    unknown,
+    unknown,
+    Omit<OrderItem, 'id'>[],
+    any
+  >((items) => createOrder(items), {
+    onMutate() {
+      queryClient.invalidateQueries(['getOrder'])
+    },
+    onSuccess() {
+      router.push('/mypage')
+    },
+  })
 
   const createCart = async (item: Omit<Cart, 'id' | 'userId'>) => {
     const response = await fetch('/api/add-cart', {
@@ -212,7 +244,24 @@ export default function Products(props: {
                 찜하기
               </Button>
             </div>
-
+            <Button
+              style={{ backgroundColor: 'black' }}
+              radius="xl"
+              size="md"
+              styles={{
+                root: { paddingRight: 14, height: 48 },
+              }}
+              onClick={() => {
+                if (session == null) {
+                  alert('로그인이 필요한 기능입니다.')
+                  router.push('/auth/login')
+                  return
+                }
+                validate('order')
+              }}
+            >
+              구매하기
+            </Button>
             <div className="text-sm text-zinc-300">
               등록일자 : {format(new Date(product.createdAt), 'yyyy년 M월 d일')}
             </div>
