@@ -2,7 +2,7 @@ import { CountControl } from '@/components/CountControl'
 import { CATEGORY_MAP } from '@/constants/products'
 import styled from '@emotion/styled'
 import { Button } from '@mantine/core'
-import { products, Cart } from '@prisma/client'
+import { products, Cart, OrderItem } from '@prisma/client'
 import { IconX } from '@tabler/icons-react'
 import { IconRefresh } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -17,6 +17,7 @@ interface CartItem extends Cart {
 }
 export default function CartPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const dilveryAmount = 5000
   const discountAmount = 0
@@ -25,7 +26,7 @@ export default function CartPage() {
     const data = await res.json()
     return data.items
   }
-  const { data: cart } = useQuery<Cart[]>([`getCart`], () => getCart())
+  const { data: cart } = useQuery<CartItem[]>([`getCart`], () => getCart())
   console.log(cart)
 
   const amount = useMemo(() => {
@@ -46,7 +47,40 @@ export default function CartPage() {
     getProductsFetch()
   )
 
-  const handleOrder = () => {}
+  const createOrder = async (items: Omit<OrderItem, 'id'>[]) => {
+    const response = await fetch('/api/add-order', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    })
+    const data = await response.json()
+    return data.items
+  }
+  const { mutate: addOrder } = useMutation<
+    unknown,
+    unknown,
+    Omit<OrderItem, 'id'>[],
+    any
+  >((items) => createOrder(items), {
+    onMutate() {
+      queryClient.invalidateQueries(['getOrder'])
+    },
+    onSuccess() {
+      router.push('/mypage')
+    },
+  })
+  const handleOrder = () => {
+    console.log(cart)
+
+    if (cart == null) return
+    addOrder(
+      cart.map((item) => ({
+        productId: item.productId,
+        price: item.price,
+        amount: item.amount,
+        quantity: item.quantity,
+      }))
+    )
+  }
   return (
     <div>
       <span className="text-2xl mb-3">Cart ({cart ? cart.length : 0})</span>
@@ -93,7 +127,7 @@ export default function CartPage() {
               styles={{
                 root: { height: 48 },
               }}
-              onClick={() => handleOrder}
+              onClick={() => handleOrder()}
             >
               구매하기
             </Button>
@@ -210,6 +244,7 @@ const Item = (props: CartItem) => {
       },
     }
   )
+
   const handleUpdate = () => {
     if (!quantity) return alert('최소 수량을 선택해주세요')
     updateCart({ ...props, quantity, amount: props.price * quantity })
