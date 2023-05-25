@@ -79,7 +79,7 @@ https://github.com/MomenSherif/react-oauth#googlelogin
 
 > yarn add jwt-decode
 
-## next-auth + prisma 설치/
+## next-auth + prisma 설치
 
 로그인(구글)을 하면 쿠키에 토큰 담는것까지 해줌
 https://next-auth.js.org/getting-started/example
